@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Sheet Ratios Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jQuery CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define custom CSS variables for the new color palette */
+        :root {
+            --color-bold-green: #00CE7C;
+            --color-soft-black: #212121;
+            --color-light-gray: #F2F2F2;
+            --color-navy-blue: #021D49;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-light-gray); /* Light Gray */
+        }
+        /* Custom styles for better aesthetics */
+        .card {
+            background-color: #ffffff; /* Keep card background white for contrast */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            padding: 2.5rem; /* p-10 */
+        }
+        .input-field {
+            border-radius: 0.5rem; /* rounded-lg */
+            border: 1px solid #d1d5db; /* Keep a light grey border */
+            padding: 0.75rem 1rem; /* py-3 px-4 */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: var(--color-navy-blue); /* Navy Blue */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600; /* font-semibold */
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: rgba(2, 29, 73, 0.8); /* Darker Navy Blue on hover */
+        }
+        .btn-secondary {
+            background-color: var(--color-bold-green); /* Bold Green */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-secondary:hover {
+            background-color: rgba(0, 206, 124, 0.8); /* Darker Bold Green on hover */
+        }
+        .btn-tertiary { /* For new 'Explain' buttons and new Listen buttons */
+            background-color: #f0f0f0; /* Light background for subtle button */
+            color: var(--color-soft-black);
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            margin-left: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
+        .btn-tertiary:hover {
+            background-color: #e0e0e0;
+        }
+
+
+        .ratio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Align items vertically in the middle */
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb; /* Keep a light grey border */
+        }
+        .ratio-item:last-child {
+            border-bottom: none;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--color-navy-blue); /* Navy Blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Status colors (keeping existing for semantic meaning) */
+        .status-fragile { color: #dc2626; /* red-600 */ }
+        .status-robust { color: #d97706; /* amber-600 */ }
+        .status-antifragile { color: #16a34a; /* green-600 */ }
+
+        .llm-summary-box {
+            background-color: var(--color-light-gray); /* Light Gray */
+            border: 1px solid #d1d5db; /* Keep a light grey border */
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .llm-explanation-box {
+            background-color: #e0f2f7; /* Light blue background for explanations */
+            border-left: 4px solid #00CE7C; /* Green left border */
+            border-radius: 0.3rem;
+            padding: 0.75rem 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--color-soft-black);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .llm-insights-box {
+            background-color: #e0f7e0; /* Light green background for insights */
+            border-left: 4px solid #021D49; /* Navy blue left border */
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            color: var(--color-soft-black);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chatbot Window Styles - HIDDEN */
+        .chatbot-window {
+            display: none; /* Completely hide the chatbot window */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="card w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center" style="color: var(--color-soft-black);">
+            <img src="logo-icon.png" alt="Logo" class="h-10 w-10 mr-3 rounded-full">
+            Balance Sheet Ratios Analyzer
+        </h1>
+
+        <div class="mb-6">
+            <label for="tickerInput" class="block text-sm font-medium mb-2" style="color: var(--color-soft-black);">Company Ticker (e.g., AAPL):</label>
+            <input type="text" id="tickerInput" class="input-field focus:border-[var(--color-bold-green)] focus:ring-[var(--color-bold-green)]" placeholder="Enter ticker symbol" autocomplete="off">
+            <p id="error-message" class="text-red-500 text-sm mt-2 hidden"></p>
+        </div>
+
+        <div class="flex justify-center mb-8">
+            <button id="analyzeBtn" class="btn-primary flex items-center justify-center">
+                Analyze Ratios
+                <span id="loadingSpinner" class="loading-spinner hidden"></span>
+            </button>
+        </div>
+
+        <div id="results" class="hidden">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2" style="color: var(--color-soft-black);">Analysis Results for <span id="companyName" style="color: var(--color-bold-green);"></span></h2>
+            <div class="space-y-2">
+                <div class="ratio-item">
+                    <span class="font-medium" style="color: var(--color-soft-black);">Current Ratio:</span>
+                    <div class="flex items-center">
+                        <span id="currentRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
+                        <span id="currentRatioStatus" class="ml-2 font-bold text-sm"></span>
+                        <!-- Removed Explain button -->
+                    </div>
+                    <!-- Removed explanation div -->
+                </div>
+                <div class="ratio-item">
+                    <span class="font-medium" style="color: var(--color-soft-black);">Quick Ratio (Acid-Test Ratio):</span>
+                    <div class="flex items-center">
+                        <span id="quickRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
+                        <span id="quickRatioStatus" class="ml-2 font-bold text-sm"></span>
+                        <!-- Removed Explain button -->
+                    </div>
+                    <!-- Removed explanation div -->
+                </div>
+                <div class="ratio-item">
+                    <span class="font-medium" style="color: var(--color-soft-black);">Debt-to-Equity Ratio (Total Liabilities/Equity):</span>
+                    <div class="flex items-center">
+                        <span id="debtToEquityRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
+                        <span id="debtToEquityRatioStatus" class="ml-2 font-bold text-sm"></span>
+                        <!-- Removed Explain button -->
+                    </div>
+                    <!-- Removed explanation div -->
+                </div>
+                <div class="ratio-item">
+                    <span class="font-medium" style="color: var(--color-soft-black);">Goodwill to Total Assets Ratio:</span>
+                    <div class="flex items-center">
+                        <span id="goodwillToTotalAssetsRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
+                        <span id="goodwillToTotalAssetsRatioStatus" class="ml-2 font-bold text-sm"></span>
+                        <!-- Removed Explain button -->
+                    </div>
+                    <!-- Removed explanation div -->
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6">
+                <button id="getSummaryBtn" class="btn-primary flex items-center justify-center">
+                    ✨ Get Financial Summary
+                    <span id="summaryLoadingSpinner" class="loading-spinner hidden"></span>
+                </button>
+                <button id="listenSummaryBtn" class="btn-secondary flex items-center justify-center hidden">
+                    🔊 Listen to Summary
+                </button>
+                <button id="getInsightsBtn" class="btn-primary flex items-center justify-center">
+                    ✨ Get Actionable Insights
+                    <span id="insightsLoadingSpinner" class="loading-spinner hidden"></span>
+                </button>
+            </div>
+
+            <div id="financialSummary" class="llm-summary-box hidden">
+                <h3 class="text-lg font-semibold mb-2" style="color: var(--color-soft-black);">
+                    Financial Summary:
+                    <button id="listenSummaryResultBtn" class="btn-tertiary ml-2">🔊 Listen</button>
+                </h3>
+                <p id="summaryText" class="text-sm" style="color: var(--color-soft-black);"></p>
+            </div>
+
+            <div id="actionableInsights" class="llm-insights-box hidden">
+                <h3 class="text-lg font-semibold mb-2" style="color: var(--color-soft-black);">
+                    Actionable Insights:
+                    <button id="listenInsightsResultBtn" class="btn-tertiary ml-2">🔊 Listen</button>
+                </h3>
+                <p id="insightsText" class="text-sm" style="color: var(--color-soft-black);"></p>
+            </div>
+
+            <!-- Added Disclaimer -->
+            <p class="text-sm mt-4 text-center text-gray-600" style="color: var(--color-soft-black);">
+                **Disclaimer:** This tool is for educational purposes only and should not be considered professional financial advice. Always consult with a qualified financial advisor before making any investment decisions.
+            </p>
+            <p class="text-sm mt-2 text-center" style="color: var(--color-soft-black);">&copy; RhytoLeaf Inc. 2025</p>
+        </div>
+    </div>
+
+    <!-- Gemini Chatbot Window - Completely removed from HTML structure -->
+
+    <script>
+        $(document).ready(function() {
+            // FMP API Key provided by the user.
+            const FMP_API_KEY = "eSX9jjsrqCMzKAKclE0tIrPqVHlyd6IP";
+            let currentUtterance = null; // To control speech synthesis
+
+            // Function to show error message
+            function showErrorMessage(message) {
+                $('#error-message').text(message).removeClass('hidden');
+            }
+
+            // Function to hide error message
+            function hideErrorMessage() {
+                $('#error-message').addClass('hidden').text('');
+            }
+
+            // Function to show loading spinner for FMP API call
+            function showLoadingSpinner() {
+                $('#loadingSpinner').removeClass('hidden');
+                $('#analyzeBtn').prop('disabled', true).css('opacity', '0.7');
+            }
+
+            // Function to hide loading spinner for FMP API call
+            function hideLoadingSpinner() {
+                $('#loadingSpinner').addClass('hidden');
+                $('#analyzeBtn').prop('disabled', false).css('opacity', '1');
+            }
+
+            // Function to show loading spinner for LLM API call (summary)
+            function showSummaryLoadingSpinner() {
+                $('#summaryLoadingSpinner').removeClass('hidden');
+                $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7');
+                $('#summaryText').text('Generating summary...');
+                $('#listenSummaryBtn').addClass('hidden'); // Hide main listen button while generating
+                $('#listenSummaryResultBtn').addClass('hidden'); // Hide new listen button while generating
+            }
+
+            // Function to hide loading spinner for LLM API call (summary)
+            function hideSummaryLoadingSpinner() {
+                $('#summaryLoadingSpinner').addClass('hidden');
+                $('#getSummaryBtn').prop('disabled', false).css('opacity', '1');
+            }
+
+            // Function to show loading spinner for insights
+            function showInsightsLoadingSpinner() {
+                $('#insightsLoadingSpinner').removeClass('hidden');
+                $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7');
+                $('#insightsText').text('Generating insights...');
+                $('#listenInsightsResultBtn').addClass('hidden'); // Hide new listen button while generating
+            }
+
+            // Function to hide loading spinner for insights
+            function hideInsightsLoadingSpinner() {
+                $('#insightsLoadingSpinner').addClass('hidden');
+                $('#getInsightsBtn').prop('disabled', false).css('opacity', '1');
+            }
+
+            /**
+             * Determines the status (Fragile, Robust, Antifragile) for a given ratio.
+             * @param {string} ratioName - The name of the ratio (e.g., 'quickRatio', 'currentRatio').
+             * @param {number} value - The numerical value of the ratio.
+             * @returns {{status: string, className: string}} An object containing the status text and its corresponding Tailwind CSS class.
+             */
+            function getRatioStatus(ratioName, value) {
+                let status = 'N/A';
+                let className = 'text-gray-500'; // Default color for N/A or unknown
+
+                if (isNaN(value) || value === null) {
+                    return { status: 'N/A', className: 'text-gray-500' };
+                }
+
+                switch (ratioName) {
+                    case 'quickRatio':
+                        if (value < 1.0) {
+                            status = 'Fragile';
+                            className = 'status-fragile';
+                        } else if (value >= 1.0 && value <= 1.5) {
+                            status = 'Robust';
+                            className = 'status-robust';
+                        } else { // value > 1.5
+                            status = 'Antifragile';
+                            className = 'status-antifragile';
+                        }
+                        break;
+                    case 'currentRatio':
+                        if (value < 0.7) {
+                            status = 'Fragile';
+                            className = 'status-fragile';
+                        } else if (value >= 0.7 && value <= 2.0) {
+                            status = 'Robust';
+                            className = 'status-robust';
+                        } else { // value > 2.0
+                            status = 'Antifragile';
+                            className = 'status-antifragile';
+                        }
+                        break;
+                    case 'debtToEquityRatio':
+                        if (value > 2.0) {
+                            status = 'Fragile';
+                            className = 'status-fragile';
+                        } else if (value >= 0.7 && value <= 2.0) {
+                            status = 'Robust';
+                            className = 'status-robust';
+                        } else { // value < 0.7
+                            status = 'Antifragile';
+                            className = 'status-antifragile';
+                        }
+                        break;
+                    case 'goodwillToTotalAssetsRatio':
+                        // Note: The input value is already a decimal (e.g., 0.1 for 10%)
+                        if (value > 0.50) { // > 50%
+                            status = 'Fragile';
+                            className = 'status-fragile';
+                        } else if (value >= 0.10 && value <= 0.50) { // 10% - 50%
+                            status = 'Robust';
+                            className = 'status-robust';
+                        } else { // < 10%
+                            status = 'Antifragile';
+                            className = 'status-antifragile';
+                        }
+                        break;
+                    default:
+                        status = 'N/A';
+                        className = 'text-gray-500';
+                        break;
+                }
+                return { status: status, className: className };
+            }
+
+
+            $('#analyzeBtn').on('click', function() {
+                const ticker = $('#tickerInput').val().trim().toUpperCase();
+                hideErrorMessage();
+                $('#results').addClass('hidden'); // Hide previous results
+                $('#financialSummary').addClass('hidden'); // Hide previous summary
+                $('#summaryText').text(''); // Clear previous summary text
+                $('#listenSummaryBtn').addClass('hidden'); // Hide main listen button
+                $('#listenSummaryResultBtn').addClass('hidden'); // Hide new listen button
+                $('#actionableInsights').addClass('hidden'); // Hide previous insights
+                $('#insightsText').text(''); // Clear previous insights text
+                $('#listenInsightsResultBtn').addClass('hidden'); // Hide new listen button
+                
+                // Hide all ratio explanations - REMOVED AS EXPLAIN BUTTONS ARE GONE
+                // $('.llm-explanation-box').addClass('hidden').text(''); 
+
+                if (window.speechSynthesis.speaking) { // Stop any ongoing speech
+                    window.speechSynthesis.cancel();
+                }
+
+                // Clear previous status displays
+                $('#currentRatioStatus').text('').removeClass('status-fragile status-robust status-antifragile');
+                $('#quickRatioStatus').text('').removeClass('status-fragile status-robust s-antifragile');
+                $('#debtToEquityRatioStatus').text('').removeClass('status-fragile status-robust status-antifragile');
+                $('#goodwillToTotalAssetsRatioStatus').text('').removeClass('status-fragile status-robust status-antifragile');
+
+
+                if (!ticker) {
+                    showErrorMessage('Please enter a company ticker symbol.');
+                    return;
+                }
+
+                showLoadingSpinner();
+
+                // FMP API endpoint for balance sheet statement
+                const balanceSheetUrl = `https://financialmodelingprep.com/api/v3/balance-sheet-statement/${ticker}?apikey=${FMP_API_KEY}`;
+                // FMP API endpoint for company profile to get company name
+                const companyProfileUrl = `https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${FMP_API_KEY}`;
+
+                // Fetch company profile first to get the company name
+                $.ajax({
+                    url: companyProfileUrl,
+                    method: 'GET',
+                    success: function(profileData) {
+                        if (profileData && profileData.length > 0) {
+                            const companyName = profileData[0].companyName;
+                            $('#companyName').text(companyName);
+
+                            // Now fetch balance sheet data
+                            $.ajax({
+                                url: balanceSheetUrl,
+                                method: 'GET',
+                                success: function(balanceSheetData) {
+                                    hideLoadingSpinner();
+                                    if (balanceSheetData && balanceSheetData.length > 0) {
+                                        const latestStatement = balanceSheetData[0]; // Get the most recent statement
+
+                                        const currentAssets = latestStatement.totalCurrentAssets;
+                                        const currentLiabilities = latestStatement.totalCurrentLiabilities;
+                                        const totalLiabilities = latestStatement.totalLiabilities;
+                                        const shareholdersEquity = latestStatement.totalStockholdersEquity;
+                                        const totalAssets = latestStatement.totalAssets;
+                                        const cashAndCashEquivalents = latestStatement.cashAndCashEquivalents;
+                                        const netReceivables = latestStatement.netReceivables;
+                                        const goodwill = latestStatement.goodwill;
+
+
+                                        // Calculate Ratios (as numbers for status calculation)
+                                        const currentRatioVal = currentLiabilities !== 0 ? (currentAssets / currentLiabilities) : NaN;
+                                        const quickRatioVal = currentLiabilities !== 0 ? ((cashAndCashEquivalents + netReceivables) / currentLiabilities) : NaN;
+                                        const debtToEquityRatioVal = shareholdersEquity !== 0 ? (totalLiabilities / shareholdersEquity) : NaN;
+                                        const goodwillToTotalAssetsRatioVal = totalAssets !== 0 ? (goodwill / totalAssets) : NaN;
+
+
+                                        // Get Status for each ratio
+                                        const currentRatioStatus = getRatioStatus('currentRatio', currentRatioVal);
+                                        const quickRatioStatus = getRatioStatus('quickRatio', quickRatioVal);
+                                        const debtToEquityRatioStatus = getRatioStatus('debtToEquityRatio', debtToEquityRatioVal);
+                                        const goodwillToTotalAssetsRatioStatus = getRatioStatus('goodwillToTotalAssetsRatio', goodwillToTotalAssetsRatioVal);
+
+
+                                        // Display Ratios (formatted to 2 decimal places)
+                                        $('#currentRatio').text(isNaN(currentRatioVal) ? 'N/A' : currentRatioVal.toFixed(2));
+                                        $('#quickRatio').text(isNaN(quickRatioVal) ? 'N/A' : quickRatioVal.toFixed(2));
+                                        $('#debtToEquityRatio').text(isNaN(debtToEquityRatioVal) ? 'N/A' : debtToEquityRatioVal.toFixed(2));
+                                        $('#goodwillToTotalAssetsRatio').text(isNaN(goodwillToTotalAssetsRatioVal) ? 'N/A' : goodwillToTotalAssetsRatioVal.toFixed(2));
+
+                                        // Display Status
+                                        $('#currentRatioStatus').text(currentRatioStatus.status).addClass(currentRatioStatus.className);
+                                        $('#quickRatioStatus').text(quickRatioStatus.status).addClass(quickRatioStatus.className);
+                                        $('#debtToEquityRatioStatus').text(debtToEquityRatioStatus.status).addClass(debtToEquityRatioStatus.className);
+                                        $('#goodwillToTotalAssetsRatioStatus').text(goodwillToTotalAssetsRatioStatus.status).addClass(goodwillToTotalAssetsRatioStatus.className);
+                                        
+                                        $('#results').removeClass('hidden');
+
+                                        // Store ratio data for LLM summary and insights
+                                        const currentRatioData = {
+                                            companyName: companyName,
+                                            ticker: ticker, // Store ticker for news API call
+                                            currentRatio: isNaN(currentRatioVal) ? 'N/A' : currentRatioVal.toFixed(2),
+                                            currentRatioStatus: currentRatioStatus.status,
+                                            quickRatio: isNaN(quickRatioVal) ? 'N/A' : quickRatioVal.toFixed(2),
+                                            quickRatioStatus: quickRatioStatus.status,
+                                            debtToEquityRatio: isNaN(debtToEquityRatioVal) ? 'N/A' : debtToEquityRatioVal.toFixed(2),
+                                            debtToEquityRatioStatus: debtToEquityRatioStatus.status,
+                                            goodwillToTotalAssetsRatio: isNaN(goodwillToTotalAssetsRatioVal) ? 'N/A' : goodwillToTotalAssetsRatioVal.toFixed(2),
+                                            goodwillToTotalAssetsRatioStatus: goodwillToTotalAssetsRatioStatus.status
+                                        };
+                                        $('#getSummaryBtn').data('ratioData', currentRatioData).prop('disabled', false).css('opacity', '1'); // Enable summary button
+                                        $('#getInsightsBtn').data('ratioData', currentRatioData).prop('disabled', false).css('opacity', '1'); // Enable insights button
+
+                                    } else {
+                                        showErrorMessage(`No balance sheet data found for ${ticker}.`);
+                                        $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button if no data
+                                        $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    hideLoadingSpinner();
+                                    console.error("Error fetching balance sheet data:", textStatus, errorThrown, jqXHR.responseText);
+                                    showErrorMessage(`Failed to fetch balance sheet data for ${ticker}. Please check the ticker or your API key.`);
+                                    $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button on error
+                                    $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                                }
+                            });
+
+                        } else {
+                            hideLoadingSpinner();
+                            showErrorMessage(`No company profile found for ${ticker}. Please check the ticker symbol.`);
+                            $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button on error
+                            $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        hideLoadingSpinner();
+                        console.error("Error fetching company profile:", textStatus, errorThrown, jqXHR.responseText);
+                        showErrorMessage(`Failed to fetch company profile for ${ticker}. Please check the ticker or your API key.`);
+                        $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button on error
+                        $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                    }
+                });
+            });
+
+            // Event listener for the "Get Financial Summary" button
+            $('#getSummaryBtn').on('click', async function() {
+                const ratioData = $(this).data('ratioData');
+                if (!ratioData) {
+                    showErrorMessage('Please analyze a company first to get a summary.');
+                    return;
+                }
+
+                showSummaryLoadingSpinner();
+                $('#financialSummary').removeClass('hidden'); // Show the summary box
+                $('#listenSummaryBtn').addClass('hidden'); // Hide main listen button while generating
+                $('#listenSummaryResultBtn').addClass('hidden'); // Hide new listen button while generating
+                if (window.speechSynthesis.speaking) { // Stop any ongoing speech
+                    window.speechSynthesis.cancel();
+                }
+
+                let newsSummary = "No recent news found for this company."; // Default message
+                const newsUrl = `https://financialmodelingprep.com/api/v3/stock_news?tickers=${ratioData.ticker}&limit=5&apikey=${FMP_API_KEY}`;
+
+                try {
+                    console.log(`Fetching news from: ${newsUrl}`);
+                    const newsResponse = await fetch(newsUrl);
+                    
+                    if (!newsResponse.ok) {
+                        throw new Error(`HTTP error! status: ${newsResponse.status}`);
+                    }
+                    
+                    const newsData = await newsResponse.json();
+                    console.log("News Data received:", newsData); // Log the received news data
+
+                    if (newsData && newsData.length > 0) {
+                        // Include publishedDate for each news item
+                        newsSummary = newsData.map(item => {
+                            const date = item.publishedDate ? new Date(item.publishedDate).toLocaleDateString() : 'No Date';
+                            return `- ${item.title} (${date})`;
+                        }).join('\n');
+                    } else {
+                        newsSummary = "No recent news found for this company.";
+                    }
+                } catch (newsError) {
+                    console.error("Error fetching news:", newsError);
+                    newsSummary = "Could not fetch recent news due to an error.";
+                }
+
+                // Prompt for concise summary (max 80 words) including metric meanings, simplified for novice
+                const prompt = `Provide a very brief (max 80 words) financial summary for ${ratioData.companyName}. Explain what each ratio means in simple terms for someone who doesn't invest much.
+- Current Ratio (${ratioData.currentRatio}, ${ratioData.currentRatioStatus}): This ratio shows if a company has enough short-term assets (like cash) to cover its short-term debts (like bills due soon). A higher ratio usually means better short-term financial health.
+- Quick Ratio (${ratioData.quickRatio}, ${ratioData.quickRatioStatus}): Similar to Current Ratio, but it only counts assets that can be quickly turned into cash, excluding inventory. It's about immediate cash readiness, indicating how fast a company can pay off immediate debts without selling its stock.
+- Debt-to-Equity Ratio (${ratioData.debtToEquityRatio}, ${ratioData.debtToEquityRatioStatus}): This compares how much a company owes (debt) to how much its owners have invested (equity). A high ratio means more reliance on borrowed money, which can be risky.
+- Goodwill to Total Assets Ratio (${ratioData.goodwillToTotalAssetsRatio}, ${ratioData.goodwillToTotalAssetsRatioStatus}): This shows how much of a company's total value comes from "goodwill" (like brand name or reputation) rather than physical things. A high percentage might mean the company relies heavily on past acquisitions or intangible assets.
+- Recent News: ${newsSummary}`;
+
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] }; // Only send this specific prompt
+                const apiKey = ""; // API key is provided by Canvas runtime for gemini-2.0-flash
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        $('#summaryText').text(text);
+                        $('#listenSummaryBtn').removeClass('hidden'); // Show main listen button
+                        $('#listenSummaryResultBtn').removeClass('hidden'); // Show new listen button
+                    } else {
+                        $('#summaryText').text('Could not generate summary. Please try again.');
+                        console.error('Unexpected LLM response structure:', result);
+                    }
+                } catch (error) {
+                    $('#summaryText').text('Error generating summary. Please check your network connection or try again later.');
+                    console.error('Error calling Gemini API:', error);
+                } finally {
+                    hideSummaryLoadingSpinner();
+                }
+            });
+
+            // Event listener for the main "Listen to Summary" button (outside the box)
+            $('#listenSummaryBtn').on('click', function() {
+                const summaryText = $('#summaryText').text();
+                if (!summaryText || summaryText === 'Generating summary...') {
+                    showErrorMessage('No summary to read yet. Please generate a summary first.');
+                    return;
+                }
+
+                if ('speechSynthesis' in window) {
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                        $(this).text('🔊 Listen to Summary');
+                        $('#listenSummaryResultBtn').text('🔊 Listen'); // Also reset the in-box button
+                    } else {
+                        currentUtterance = new SpeechSynthesisUtterance(summaryText);
+                        currentUtterance.onend = function() {
+                            $('#listenSummaryBtn').text('🔊 Listen to Summary');
+                            $('#listenSummaryResultBtn').text('🔊 Listen');
+                        };
+                        currentUtterance.onerror = function(event) {
+                            console.error('SpeechSynthesisUtterance.onerror', event);
+                            showErrorMessage('Error speaking summary.');
+                            $('#listenSummaryBtn').text('🔊 Listen to Summary');
+                            $('#listenSummaryResultBtn').text('🔊 Listen');
+                        };
+                        window.speechSynthesis.speak(currentUtterance);
+                        $(this).text('🔇 Stop Listening');
+                        $('#listenSummaryResultBtn').text('🔇 Stop Listening'); // Also update the in-box button
+                    }
+                } else {
+                    showErrorMessage('Text-to-speech is not supported in your browser.');
+                }
+            });
+
+            // Event listener for the new "Listen" button within the Financial Summary result box
+            $('#listenSummaryResultBtn').on('click', function() {
+                const summaryText = $('#summaryText').text();
+                if (!summaryText || summaryText === 'Generating summary...') {
+                    showErrorMessage('No summary to read yet. Please generate a summary first.');
+                    return;
+                }
+
+                if ('speechSynthesis' in window) {
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                        $(this).text('🔊 Listen');
+                        $('#listenSummaryBtn').text('🔊 Listen to Summary'); // Also reset the main button
+                    } else {
+                        currentUtterance = new SpeechSynthesisUtterance(summaryText);
+                        currentUtterance.onend = function() {
+                            $('#listenSummaryResultBtn').text('🔊 Listen');
+                            $('#listenSummaryBtn').text('🔊 Listen to Summary');
+                        };
+                        currentUtterance.onerror = function(event) {
+                            console.error('SpeechSynthesisUtterance.onerror', event);
+                            showErrorMessage('Error speaking summary.');
+                            $('#listenSummaryResultBtn').text('🔊 Listen');
+                            $('#listenSummaryBtn').text('🔊 Listen to Summary');
+                        };
+                        window.speechSynthesis.speak(currentUtterance);
+                        $(this).text('🔇 Stop Listening');
+                        $('#listenSummaryBtn').text('🔇 Stop Listening'); // Also update the main button
+                    }
+                } else {
+                    showErrorMessage('Text-to-speech is not supported in your browser.');
+                }
+            });
+
+
+            // Removed Event listener for "Explain Ratio" buttons
+            /*
+            $(document).on('click', '.explain-ratio-btn', async function() {
+                const ratioName = $(this).data('ratio');
+                const ratioValue = $(this).siblings('span.font-semibold').text();
+                const ratioStatus = $(this).siblings('span.font-bold').text();
+                const companyName = $('#companyName').text();
+                const explanationBoxId = `${ratioName.toLowerCase().replace(/[^a-z0-9]/g, '')}Explanation`;
+                const explanationBox = $(`#${explanationBoxId}`);
+
+                // Hide all other explanations
+                $('.llm-explanation-box').not(explanationBox).addClass('hidden').text('');
+
+                // Toggle visibility of the current explanation box
+                if (explanationBox.hasClass('hidden')) {
+                    explanationBox.removeClass('hidden').text('Generating explanation...');
+
+                    const prompt = `Explain the "${ratioName}" in one very concise sentence (max 80 words) for a novice. What does its value (${ratioValue}) and status (${ratioStatus}) mean for ${companyName}? Focus on simple terms.`;
+                    
+                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                    const apiKey = ""; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await response.json();
+
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            const explanationText = result.candidates[0].content.parts[0].text;
+                            explanationBox.text(explanationText);
+                        } else {
+                            explanationBox.text('Could not get an explanation.');
+                            console.error('Unexpected LLM response structure for explain ratio:', result);
+                        }
+                    } catch (error) {
+                        explanationBox.text('Error fetching explanation.');
+                        console.error('Error calling Gemini API for explain ratio:', error);
+                    }
+                } else {
+                    explanationBox.addClass('hidden').text(''); // Hide if already visible
+                }
+            });
+            */
+
+            // Event listener for "Get Actionable Insights" button
+            $('#getInsightsBtn').on('click', async function() {
+                const ratioData = $(this).data('ratioData');
+                if (!ratioData) {
+                    showErrorMessage('Please analyze a company first to get insights.');
+                    return;
+                }
+
+                showInsightsLoadingSpinner();
+                $('#actionableInsights').removeClass('hidden'); // Show the insights box
+                $('#listenInsightsResultBtn').addClass('hidden'); // Hide new listen button while generating
+
+
+                const insightsPrompt = `Provide 2-3 very brief (max 80 words), actionable insights for ${ratioData.companyName} based on these financial ratios, suitable for a novice. Use short, simple sentences or bullet points. Focus on practical steps or key takeaways, especially for 'Fragile' or 'Robust' areas.
+- Current Ratio: ${ratioData.currentRatio} (${ratioData.currentRatioStatus})
+- Quick Ratio: ${ratioData.quickRatio} (${ratioData.quickRatioStatus})
+- Debt-to-Equity Ratio: ${ratioData.debtToEquityRatio} (${ratioData.debtToEquityRatioStatus})
+- Goodwill to Total Assets Ratio: ${ratioData.goodwillToTotalAssetsRatio} (${ratioData.goodwillToTotalAssetsRatioStatus})`;
+
+                const payload = { contents: [{ role: "user", parts: [{ text: insightsPrompt }] }] };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const insightsText = result.candidates[0].content.parts[0].text;
+                        $('#insightsText').html(insightsText.replace(/\n/g, '<br>')); // Display as HTML to preserve newlines
+                        $('#listenInsightsResultBtn').removeClass('hidden'); // Show new listen button
+                    } else {
+                        $('#insightsText').text('Could not generate actionable insights.');
+                        console.error('Unexpected LLM response structure for insights:', result);
+                    }
+                } catch (error) {
+                    $('#insightsText').text('Error generating insights. Please check your network.');
+                    console.error('Error calling Gemini API for insights:', error);
+                } finally {
+                    hideInsightsLoadingSpinner();
+                }
+            });
+
+            // Event listener for the new "Listen" button within the Actionable Insights result box
+            $('#listenInsightsResultBtn').on('click', function() {
+                const insightsText = $('#insightsText').text();
+                if (!insightsText || insightsText === 'Generating insights...') {
+                    showErrorMessage('No insights to read yet. Please generate insights first.');
+                    return;
+                }
+
+                if ('speechSynthesis' in window) {
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                        $(this).text('🔊 Listen');
+                    } else {
+                        currentUtterance = new SpeechSynthesisUtterance(insightsText);
+                        currentUtterance.onend = function() {
+                            $('#listenInsightsResultBtn').text('🔊 Listen');
+                        };
+                        currentUtterance.onerror = function(event) {
+                            console.error('SpeechSynthesisUtterance.onerror', event);
+                            showErrorMessage('Error speaking insights.');
+                            $('#listenInsightsResultBtn').text('🔊 Listen');
+                        };
+                        window.speechSynthesis.speak(currentUtterance);
+                        $(this).text('🔇 Stop Listening');
+                    }
+                } else {
+                    showErrorMessage('Text-to-speech is not supported in your browser.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
