@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Balance Sheet Ratios Analyzer</title>
+    <!-- Favicon -->
+    <link rel="icon" href="logo-icon.png" type="image/png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- jQuery CDN -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <!-- Inter font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Define custom CSS variables for the new color palette */
         :root {
             --color-bold-green: #00CE7C;
             --color-soft-black: #212121;
@@ -21,35 +24,34 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-light-gray); /* Light Gray */
+            background-color: var(--color-light-gray);
         }
-        /* Custom styles for better aesthetics */
         .card {
-            background-color: #ffffff; /* Keep card background white for contrast */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
-            padding: 2.5rem; /* p-10 */
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
         }
         .input-field {
-            border-radius: 0.5rem; /* rounded-lg */
-            border: 1px solid #d1d5db; /* Keep a light grey border */
-            padding: 0.75rem 1rem; /* py-3 px-4 */
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 1rem;
             width: 100%;
             box-sizing: border-box;
         }
         .btn-primary {
-            background-color: var(--color-navy-blue); /* Navy Blue */
+            background-color: var(--color-navy-blue);
             color: #ffffff;
-            padding: 0.75rem 1.5rem; /* py-3 px-6 */
-            border-radius: 0.5rem; /* rounded-lg */
-            font-weight: 600; /* font-semibold */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
             transition: background-color 0.2s ease-in-out;
         }
         .btn-primary:hover {
-            background-color: rgba(2, 29, 73, 0.8); /* Darker Navy Blue on hover */
+            background-color: rgba(2, 29, 73, 0.8);
         }
         .btn-secondary {
-            background-color: var(--color-bold-green); /* Bold Green */
+            background-color: var(--color-bold-green);
             color: #ffffff;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
@@ -57,10 +59,10 @@
             transition: background-color 0.2s ease-in-out;
         }
         .btn-secondary:hover {
-            background-color: rgba(0, 206, 124, 0.8); /* Darker Bold Green on hover */
+            background-color: rgba(0, 206, 124, 0.8);
         }
-        .btn-tertiary { /* For new 'Explain' buttons and new Listen buttons */
-            background-color: #f0f0f0; /* Light background for subtle button */
+        .btn-tertiary {
+            background-color: #f0f0f0;
             color: var(--color-soft-black);
             padding: 0.3rem 0.6rem;
             border-radius: 0.3rem;
@@ -78,16 +80,16 @@
         .ratio-item {
             display: flex;
             justify-content: space-between;
-            align-items: center; /* Align items vertically in the middle */
+            align-items: center;
             padding: 0.75rem 0;
-            border-bottom: 1px solid #e5e7eb; /* Keep a light grey border */
+            border-bottom: 1px solid #e5e7eb;
         }
         .ratio-item:last-child {
             border-bottom: none;
         }
         .loading-spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: var(--color-navy-blue); /* Navy Blue */
+            border-left-color: var(--color-navy-blue);
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -101,21 +103,20 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Status colors (keeping existing for semantic meaning) */
-        .status-fragile { color: #dc2626; /* red-600 */ }
-        .status-robust { color: #d97706; /* amber-600 */ }
-        .status-antifragile { color: #16a34a; /* green-600 */ }
+        .status-fragile { color: #dc2626; }
+        .status-robust { color: #d97706; }
+        .status-antifragile { color: #16a34a; }
 
         .llm-summary-box {
-            background-color: var(--color-light-gray); /* Light Gray */
-            border: 1px solid #d1d5db; /* Keep a light grey border */
+            background-color: var(--color-light-gray);
+            border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 1.5rem;
             margin-top: 1.5rem;
         }
         .llm-explanation-box {
-            background-color: #e0f2f7; /* Light blue background for explanations */
-            border-left: 4px solid #00CE7C; /* Green left border */
+            background-color: #e0f2f7;
+            border-left: 4px solid #00CE7C;
             border-radius: 0.3rem;
             padding: 0.75rem 1rem;
             margin-top: 0.5rem;
@@ -124,8 +125,8 @@
             animation: fadeIn 0.3s ease-out;
         }
         .llm-insights-box {
-            background-color: #e0f7e0; /* Light green background for insights */
-            border-left: 4px solid #021D49; /* Navy blue left border */
+            background-color: #e0f7e0;
+            border-left: 4px solid var(--color-navy-blue);
             border-radius: 0.5rem;
             padding: 1.5rem;
             margin-top: 1.5rem;
@@ -136,13 +137,94 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Chatbot Window Styles - HIDDEN */
         .chatbot-window {
-            display: none; /* Completely hide the chatbot window */
+            display: none;
+        }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-soft-black);
+        }
+        .info-icon {
+            cursor: pointer;
+            margin-left: 0.5rem;
+            font-size: 1rem;
+            color: var(--color-navy-blue);
+            transition: color 0.2s ease-in-out;
+        }
+        .info-icon:hover {
+            color: var(--color-bold-green);
+        }
+
+        .modal-guide-text {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal-guide-text strong {
+            color: var(--color-navy-blue);
+        }
+        .modal-guide-list {
+            list-style: disc;
+            padding-left: 1.5rem;
+        }
+
+        /* Chart container styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Maximum width for the chart */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height for chart */
+            max-height: 400px; /* Max height to prevent excessive vertical space */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <!-- Chosen Palette: Warm Neutrals with Bold Green and Navy Blue Accents -->
+    <!-- Application Structure Plan: The application is structured as a single-page interactive financial analyzer. It begins with a clear input section for a company ticker. Upon analysis, a results section dynamically appears, presenting core balance sheet ratios in a list format for quick review. This is followed by dedicated sections for an AI-generated financial summary and actionable insights, each with text-to-speech capabilities. The interactive stock price chart with currency toggle enhances exploration and understanding of individual stock performance. This linear, progressive structure (Input -> Core Data -> Interpretation -> Actionable Takeaways -> Detailed Stock Performance) was chosen to guide novice users through financial analysis in an intuitive, digestible, and non-overwhelming manner, prioritizing understanding and ease of consumption over complex navigation. -->
+    <!-- Visualization & Content Choices: The core information from the source report (balance sheet ratios, financial summary, actionable insights) is presented primarily as clear textual content.
+    - Ratio Values & Status: Goal: Inform. Method: HTML span elements with color-coded Tailwind classes for status (Fragile, Robust, Antifragile). Interaction: Info icon toggles a modal with specific guide information for each ratio. Justification: For single-point-in-time numerical ratios, direct text display with status is the clearest and most immediate way to convey information to a novice user without introducing unnecessary complexity of charts. Individual modals provide on-demand, contextual explanations.
+    - Financial Summary (AI-generated): Goal: Synthesize & Inform. Method: HTML paragraph within a styled div. Interaction: "Listen" button for text-to-speech. Justification: Provides a high-level, simplified overview, crucial for novice understanding. TTS enhances accessibility and engagement.
+    - Actionable Insights (AI-generated): Goal: Action & Inform. Method: HTML paragraph (with <br> for line breaks) within a styled div. Interaction: "Listen" button for text-to-speech. Justification: Translates complex financial data into practical takeaways, directly addressing the novice user's need for guidance. TTS enhances accessibility.
+    - Stock Price Chart: Goal: Change & Inform. Method: Chart.js line chart within a responsive div container. Interaction: Toggle buttons for USD/CAD currency view. Justification: Visualizes historical price trends, which is critical for understanding stock performance. Currency toggle adds flexibility for users in different regions. Chart.js provides robust, interactive charting capabilities.
+    - Company Branding: Goal: Identity. Method: PNG image (user-provided) for favicon and main title. Justification: Standard web practice for branding.
+    - Loading Spinners & Error Messages: Goal: User Feedback. Method: HTML span with CSS animation and text paragraphs, dynamically shown/hidden with JS. Justification: Provides crucial feedback during API calls and for invalid inputs, improving user experience.
+    Confirmed: NO SVG graphics used. NO Mermaid JS used. -->
 
     <div class="card w-full max-w-2xl">
         <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center" style="color: var(--color-soft-black);">
@@ -165,42 +247,41 @@
 
         <div id="results" class="hidden">
             <h2 class="text-2xl font-semibold mb-4 border-b pb-2" style="color: var(--color-soft-black);">Analysis Results for <span id="companyName" style="color: var(--color-bold-green);"></span></h2>
+            <p class="text-sm text-gray-700 mb-4" style="color: var(--color-soft-black);">
+                This section presents the calculated balance sheet ratios for the selected company. These ratios offer a quick snapshot of the company's financial health, indicating its liquidity, leverage, and asset composition. Each ratio is accompanied by a status (Fragile, Robust, or Antifragile) to help you quickly assess its implications.
+            </p>
             <div class="space-y-2">
                 <div class="ratio-item">
                     <span class="font-medium" style="color: var(--color-soft-black);">Current Ratio:</span>
                     <div class="flex items-center">
                         <span id="currentRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
                         <span id="currentRatioStatus" class="ml-2 font-bold text-sm"></span>
-                        <!-- Removed Explain button -->
+                        <span id="currentRatioInfo" class="info-icon" title="View Current Ratio Guide">ⓘ</span>
                     </div>
-                    <!-- Removed explanation div -->
                 </div>
                 <div class="ratio-item">
                     <span class="font-medium" style="color: var(--color-soft-black);">Quick Ratio (Acid-Test Ratio):</span>
                     <div class="flex items-center">
                         <span id="quickRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
                         <span id="quickRatioStatus" class="ml-2 font-bold text-sm"></span>
-                        <!-- Removed Explain button -->
+                        <span id="quickRatioInfo" class="info-icon" title="View Quick Ratio Guide">ⓘ</span>
                     </div>
-                    <!-- Removed explanation div -->
                 </div>
                 <div class="ratio-item">
                     <span class="font-medium" style="color: var(--color-soft-black);">Debt-to-Equity Ratio (Total Liabilities/Equity):</span>
                     <div class="flex items-center">
                         <span id="debtToEquityRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
                         <span id="debtToEquityRatioStatus" class="ml-2 font-bold text-sm"></span>
-                        <!-- Removed Explain button -->
+                        <span id="debtToEquityRatioInfo" class="info-icon" title="View Debt-to-Equity Ratio Guide">ⓘ</span>
                     </div>
-                    <!-- Removed explanation div -->
                 </div>
                 <div class="ratio-item">
                     <span class="font-medium" style="color: var(--color-soft-black);">Goodwill to Total Assets Ratio:</span>
                     <div class="flex items-center">
                         <span id="goodwillToTotalAssetsRatio" class="font-semibold" style="color: var(--color-soft-black);"></span>
                         <span id="goodwillToTotalAssetsRatioStatus" class="ml-2 font-bold text-sm"></span>
-                        <!-- Removed Explain button -->
+                        <span id="goodwillToTotalAssetsRatioInfo" class="info-icon" title="View Goodwill to Total Assets Ratio Guide">ⓘ</span>
                     </div>
-                    <!-- Removed explanation div -->
                 </div>
             </div>
 
@@ -223,6 +304,9 @@
                     Financial Summary:
                     <button id="listenSummaryResultBtn" class="btn-tertiary ml-2">🔊 Listen</button>
                 </h3>
+                <p class="text-sm text-gray-700 mb-2" style="color: var(--color-soft-black);">
+                    This summary, powered by AI, provides a brief overview of the company's financial health based on the calculated ratios and recent news. It's designed to give you a quick, easy-to-understand interpretation of the numbers.
+                </p>
                 <p id="summaryText" class="text-sm" style="color: var(--color-soft-black);"></p>
             </div>
 
@@ -234,7 +318,17 @@
                 <p id="insightsText" class="text-sm" style="color: var(--color-soft-black);"></p>
             </div>
 
-            <!-- Added Disclaimer -->
+            <div id="stockChartSection" class="mt-8 hidden">
+                <h3 id="stockChartTitle" class="text-2xl font-semibold mb-4 border-b pb-2" style="color: var(--color-soft-black);"></h3>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <button id="usdToggleBtn" class="btn-secondary"></button>
+                    <button id="cadToggleBtn" class="btn-tertiary"></button>
+                </div>
+                <div class="chart-container bg-white p-4 rounded-lg shadow-md">
+                    <canvas id="stockPriceChart"></canvas>
+                </div>
+            </div>
+
             <p class="text-sm mt-4 text-center text-gray-600" style="color: var(--color-soft-black);">
                 **Disclaimer:** This tool is for educational purposes only and should not be considered professional financial advice. Always consult with a qualified financial advisor before making any investment decisions.
             </p>
@@ -242,74 +336,132 @@
         </div>
     </div>
 
-    <!-- Gemini Chatbot Window - Completely removed from HTML structure -->
+    <!-- Quick Ratio Guide Modal -->
+    <div id="quickRatioModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn close-modal-btn">✖</button>
+            <h3 class="text-xl font-semibold mb-3" style="color: var(--color-navy-blue);">Quick Ratio Guide</h3>
+            <p class="modal-guide-text"><strong>Question:</strong> Can the company pay its bills?</p>
+            <p class="modal-guide-text"><strong>Equation:</strong> (Cash & Equivalents + Receivables) &divide; Current Liabilities</p>
+            <div class="mt-2 text-sm">
+                <p><span class="font-semibold">Guide:</span></p>
+                <ul class="modal-guide-list">
+                    <li>Fragile = &lt;1.0</li>
+                    <li>Robust = 1 to 1.5</li>
+                    <li>Antifragile = 1.5+</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Ratio Guide Modal -->
+    <div id="currentRatioModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn close-modal-btn">✖</button>
+            <h3 class="text-xl font-semibold mb-3" style="color: var(--color-navy-blue);">Current Ratio Guide</h3>
+            <p class="modal-guide-text"><strong>Question:</strong> How well does the company manage its assets?</p>
+            <p class="modal-guide-text"><strong>Equation:</strong> Current Assets &divide; Current Liabilities</p>
+            <div class="mt-2 text-sm">
+                <p><span class="font-semibold">Guide:</span></p>
+                <ul class="modal-guide-list">
+                    <li>Fragile = &lt;0.7</li>
+                    <li>Robust = 0.7 - 2</li>
+                    <li>Antifragile = 2+</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debt-to-Equity Ratio Guide Modal -->
+    <div id="debtToEquityRatioModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn close-modal-btn">✖</button>
+            <h3 class="text-xl font-semibold mb-3" style="color: var(--color-navy-blue);">Debt-to-Equity Ratio Guide</h3>
+            <p class="modal-guide-text"><strong>Question:</strong> How much leverage is the company using?</p>
+            <p class="modal-guide-text"><strong>Equation:</strong> Total Liabilities &divide; Shareholder Equity</p>
+            <div class="mt-2 text-sm">
+                <p><span class="font-semibold">Guide:</span></p>
+                <ul class="modal-guide-list">
+                    <li>Fragile = &ge;2.0</li>
+                    <li>Robust = 0.7 - 2</li>
+                    <li>Antifragile = &lt;0.7</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goodwill to Total Assets Ratio Guide Modal -->
+    <div id="goodwillToTotalAssetsRatioModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn close-modal-btn">✖</button>
+            <h3 class="text-xl font-semibold mb-3" style="color: var(--color-navy-blue);">Goodwill to Total Assets Ratio Guide</h3>
+            <p class="modal-guide-text"><strong>Question:</strong> Is the company growing organically?</p>
+            <p class="modal-guide-text"><strong>Equation:</strong> Goodwill &divide; Total Assets</p>
+            <div class="mt-2 text-sm">
+                <p><span class="font-semibold">Guide:</span></p>
+                <ul class="modal-guide-list">
+                    <li>Fragile = &gt;50%</li>
+                    <li>Robust = 10%-50%</li>
+                    <li>Antifragile = &lt;10%</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <script>
         $(document).ready(function() {
-            // FMP API Key provided by the user.
             const FMP_API_KEY = "eSX9jjsrqCMzKAKclE0tIrPqVHlyd6IP";
-            let currentUtterance = null; // To control speech synthesis
+            const CAD_USD_EXCHANGE_RATE = 1.37; // Static exchange rate for demonstration
+            let currentUtterance = null;
+            let stockChart = null; // Variable to hold the Chart.js instance
+            let historicalPricesData = []; // To store fetched historical prices
 
-            // Function to show error message
             function showErrorMessage(message) {
                 $('#error-message').text(message).removeClass('hidden');
             }
 
-            // Function to hide error message
             function hideErrorMessage() {
                 $('#error-message').addClass('hidden').text('');
             }
 
-            // Function to show loading spinner for FMP API call
             function showLoadingSpinner() {
                 $('#loadingSpinner').removeClass('hidden');
                 $('#analyzeBtn').prop('disabled', true).css('opacity', '0.7');
             }
 
-            // Function to hide loading spinner for FMP API call
             function hideLoadingSpinner() {
                 $('#loadingSpinner').addClass('hidden');
                 $('#analyzeBtn').prop('disabled', false).css('opacity', '1');
             }
 
-            // Function to show loading spinner for LLM API call (summary)
             function showSummaryLoadingSpinner() {
                 $('#summaryLoadingSpinner').removeClass('hidden');
                 $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7');
                 $('#summaryText').text('Generating summary...');
-                $('#listenSummaryBtn').addClass('hidden'); // Hide main listen button while generating
-                $('#listenSummaryResultBtn').addClass('hidden'); // Hide new listen button while generating
+                $('#listenSummaryBtn').addClass('hidden');
+                $('#listenSummaryResultBtn').addClass('hidden');
             }
 
-            // Function to hide loading spinner for LLM API call (summary)
             function hideSummaryLoadingSpinner() {
                 $('#summaryLoadingSpinner').addClass('hidden');
                 $('#getSummaryBtn').prop('disabled', false).css('opacity', '1');
             }
 
-            // Function to show loading spinner for insights
             function showInsightsLoadingSpinner() {
                 $('#insightsLoadingSpinner').removeClass('hidden');
                 $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7');
                 $('#insightsText').text('Generating insights...');
-                $('#listenInsightsResultBtn').addClass('hidden'); // Hide new listen button while generating
+                $('#listenInsightsResultBtn').addClass('hidden');
             }
 
-            // Function to hide loading spinner for insights
             function hideInsightsLoadingSpinner() {
                 $('#insightsLoadingSpinner').addClass('hidden');
                 $('#getInsightsBtn').prop('disabled', false).css('opacity', '1');
             }
 
-            /**
-             * Determines the status (Fragile, Robust, Antifragile) for a given ratio.
-             * @param {string} ratioName - The name of the ratio (e.g., 'quickRatio', 'currentRatio').
-             * @param {number} value - The numerical value of the ratio.
-             * @returns {{status: string, className: string}} An object containing the status text and its corresponding Tailwind CSS class.
-             */
             function getRatioStatus(ratioName, value) {
                 let status = 'N/A';
-                let className = 'text-gray-500'; // Default color for N/A or unknown
+                let className = 'text-gray-500';
 
                 if (isNaN(value) || value === null) {
                     return { status: 'N/A', className: 'text-gray-500' };
@@ -323,7 +475,7 @@
                         } else if (value >= 1.0 && value <= 1.5) {
                             status = 'Robust';
                             className = 'status-robust';
-                        } else { // value > 1.5
+                        } else {
                             status = 'Antifragile';
                             className = 'status-antifragile';
                         }
@@ -335,7 +487,7 @@
                         } else if (value >= 0.7 && value <= 2.0) {
                             status = 'Robust';
                             className = 'status-robust';
-                        } else { // value > 2.0
+                        } else {
                             status = 'Antifragile';
                             className = 'status-antifragile';
                         }
@@ -347,20 +499,19 @@
                         } else if (value >= 0.7 && value <= 2.0) {
                             status = 'Robust';
                             className = 'status-robust';
-                        } else { // value < 0.7
+                        } else {
                             status = 'Antifragile';
                             className = 'status-antifragile';
                         }
                         break;
                     case 'goodwillToTotalAssetsRatio':
-                        // Note: The input value is already a decimal (e.g., 0.1 for 10%)
-                        if (value > 0.50) { // > 50%
+                        if (value > 0.50) {
                             status = 'Fragile';
                             className = 'status-fragile';
-                        } else if (value >= 0.10 && value <= 0.50) { // 10% - 50%
+                        } else if (value >= 0.10 && value <= 0.50) {
                             status = 'Robust';
                             className = 'status-robust';
-                        } else { // < 10%
+                        } else {
                             status = 'Antifragile';
                             className = 'status-antifragile';
                         }
@@ -373,27 +524,90 @@
                 return { status: status, className: className };
             }
 
+            // Function to render the stock price chart
+            function renderStockChart(prices, dates, currency = 'USD') {
+                if (stockChart) {
+                    stockChart.destroy(); // Destroy existing chart instance
+                }
+
+                const ctx = document.getElementById('stockPriceChart').getContext('2d');
+                const displayPrices = prices.map(price => currency === 'CAD' ? (price * CAD_USD_EXCHANGE_RATE) : price);
+                const currencySymbol = currency === 'CAD' ? 'C$' : '$';
+
+                stockChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: `Closing Price (${currency})`,
+                            data: displayPrices,
+                            borderColor: 'var(--color-navy-blue)',
+                            backgroundColor: 'rgba(2, 29, 73, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += `${currencySymbol}${context.parsed.y.toFixed(2)}`;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    autoSkip: true,
+                                    maxRotation: 45,
+                                    minRotation: 0,
+                                    callback: function(val, index) {
+                                        // Show roughly every 10th label, adjust as needed for density
+                                        return index % Math.ceil(dates.length / 10) === 0 ? this.getLabelForValue(val) : '';
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return `${currencySymbol}${value.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
 
             $('#analyzeBtn').on('click', function() {
                 const ticker = $('#tickerInput').val().trim().toUpperCase();
                 hideErrorMessage();
-                $('#results').addClass('hidden'); // Hide previous results
-                $('#financialSummary').addClass('hidden'); // Hide previous summary
-                $('#summaryText').text(''); // Clear previous summary text
-                $('#listenSummaryBtn').addClass('hidden'); // Hide main listen button
-                $('#listenSummaryResultBtn').addClass('hidden'); // Hide new listen button
-                $('#actionableInsights').addClass('hidden'); // Hide previous insights
-                $('#insightsText').text(''); // Clear previous insights text
-                $('#listenInsightsResultBtn').addClass('hidden'); // Hide new listen button
+                $('#results').addClass('hidden');
+                $('#financialSummary').addClass('hidden');
+                $('#summaryText').text('');
+                $('#listenSummaryBtn').addClass('hidden');
+                $('#listenSummaryResultBtn').addClass('hidden');
+                $('#actionableInsights').addClass('hidden');
+                $('#insightsText').text('');
+                $('#listenInsightsResultBtn').addClass('hidden');
+                $('#stockChartSection').addClass('hidden'); // Hide chart section on new analysis
                 
-                // Hide all ratio explanations - REMOVED AS EXPLAIN BUTTONS ARE GONE
-                // $('.llm-explanation-box').addClass('hidden').text(''); 
-
-                if (window.speechSynthesis.speaking) { // Stop any ongoing speech
+                if (window.speechSynthesis.speaking) {
                     window.speechSynthesis.cancel();
                 }
 
-                // Clear previous status displays
                 $('#currentRatioStatus').text('').removeClass('status-fragile status-robust status-antifragile');
                 $('#quickRatioStatus').text('').removeClass('status-fragile status-robust s-antifragile');
                 $('#debtToEquityRatioStatus').text('').removeClass('status-fragile status-robust status-antifragile');
@@ -407,28 +621,29 @@
 
                 showLoadingSpinner();
 
-                // FMP API endpoint for balance sheet statement
                 const balanceSheetUrl = `https://financialmodelingprep.com/api/v3/balance-sheet-statement/${ticker}?apikey=${FMP_API_KEY}`;
-                // FMP API endpoint for company profile to get company name
                 const companyProfileUrl = `https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${FMP_API_KEY}`;
+                const historicalPriceUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${ticker}?apikey=${FMP_API_KEY}`;
 
-                // Fetch company profile first to get the company name
                 $.ajax({
                     url: companyProfileUrl,
                     method: 'GET',
                     success: function(profileData) {
                         if (profileData && profileData.length > 0) {
-                            const companyName = profileData[0].companyName;
+                            const companyName = profileData[0].companyName || 'Unknown Company'; // Handle undefined companyName
                             $('#companyName').text(companyName);
 
-                            // Now fetch balance sheet data
+                            // Update stock chart title and button text with ticker
+                            $('#stockChartTitle').text(`${ticker} Stock Price Trend`);
+                            $('#usdToggleBtn').text(`${ticker} USD`);
+                            $('#cadToggleBtn').text(`${ticker} CAD`);
+
                             $.ajax({
                                 url: balanceSheetUrl,
                                 method: 'GET',
                                 success: function(balanceSheetData) {
-                                    hideLoadingSpinner();
                                     if (balanceSheetData && balanceSheetData.length > 0) {
-                                        const latestStatement = balanceSheetData[0]; // Get the most recent statement
+                                        const latestStatement = balanceSheetData[0];
 
                                         const currentAssets = latestStatement.totalCurrentAssets;
                                         const currentLiabilities = latestStatement.totalCurrentLiabilities;
@@ -439,28 +654,21 @@
                                         const netReceivables = latestStatement.netReceivables;
                                         const goodwill = latestStatement.goodwill;
 
-
-                                        // Calculate Ratios (as numbers for status calculation)
                                         const currentRatioVal = currentLiabilities !== 0 ? (currentAssets / currentLiabilities) : NaN;
                                         const quickRatioVal = currentLiabilities !== 0 ? ((cashAndCashEquivalents + netReceivables) / currentLiabilities) : NaN;
                                         const debtToEquityRatioVal = shareholdersEquity !== 0 ? (totalLiabilities / shareholdersEquity) : NaN;
                                         const goodwillToTotalAssetsRatioVal = totalAssets !== 0 ? (goodwill / totalAssets) : NaN;
 
-
-                                        // Get Status for each ratio
                                         const currentRatioStatus = getRatioStatus('currentRatio', currentRatioVal);
                                         const quickRatioStatus = getRatioStatus('quickRatio', quickRatioVal);
                                         const debtToEquityRatioStatus = getRatioStatus('debtToEquityRatio', debtToEquityRatioVal);
                                         const goodwillToTotalAssetsRatioStatus = getRatioStatus('goodwillToTotalAssetsRatio', goodwillToTotalAssetsRatioVal);
 
-
-                                        // Display Ratios (formatted to 2 decimal places)
                                         $('#currentRatio').text(isNaN(currentRatioVal) ? 'N/A' : currentRatioVal.toFixed(2));
                                         $('#quickRatio').text(isNaN(quickRatioVal) ? 'N/A' : quickRatioVal.toFixed(2));
                                         $('#debtToEquityRatio').text(isNaN(debtToEquityRatioVal) ? 'N/A' : debtToEquityRatioVal.toFixed(2));
                                         $('#goodwillToTotalAssetsRatio').text(isNaN(goodwillToTotalAssetsRatioVal) ? 'N/A' : goodwillToTotalAssetsRatioVal.toFixed(2));
 
-                                        // Display Status
                                         $('#currentRatioStatus').text(currentRatioStatus.status).addClass(currentRatioStatus.className);
                                         $('#quickRatioStatus').text(quickRatioStatus.status).addClass(quickRatioStatus.className);
                                         $('#debtToEquityRatioStatus').text(debtToEquityRatioStatus.status).addClass(debtToEquityRatioStatus.className);
@@ -468,10 +676,9 @@
                                         
                                         $('#results').removeClass('hidden');
 
-                                        // Store ratio data for LLM summary and insights
-                                        const currentRatioData = {
+                                        const ratioData = {
                                             companyName: companyName,
-                                            ticker: ticker, // Store ticker for news API call
+                                            ticker: ticker,
                                             currentRatio: isNaN(currentRatioVal) ? 'N/A' : currentRatioVal.toFixed(2),
                                             currentRatioStatus: currentRatioStatus.status,
                                             quickRatio: isNaN(quickRatioVal) ? 'N/A' : quickRatioVal.toFixed(2),
@@ -481,37 +688,69 @@
                                             goodwillToTotalAssetsRatio: isNaN(goodwillToTotalAssetsRatioVal) ? 'N/A' : goodwillToTotalAssetsRatioVal.toFixed(2),
                                             goodwillToTotalAssetsRatioStatus: goodwillToTotalAssetsRatioStatus.status
                                         };
-                                        $('#getSummaryBtn').data('ratioData', currentRatioData).prop('disabled', false).css('opacity', '1'); // Enable summary button
-                                        $('#getInsightsBtn').data('ratioData', currentRatioData).prop('disabled', false).css('opacity', '1'); // Enable insights button
+                                        $('#getSummaryBtn').data('ratioData', ratioData).prop('disabled', false).css('opacity', '1');
+                                        $('#getInsightsBtn').data('ratioData', ratioData).prop('disabled', false).css('opacity', '1');
+
+                                        // Fetch historical prices for the chart
+                                        $.ajax({
+                                            url: historicalPriceUrl,
+                                            method: 'GET',
+                                            success: function(priceData) {
+                                                hideLoadingSpinner();
+                                                if (priceData && priceData.historical && priceData.historical.length > 0) {
+                                                    // Get last 90 days of data for better visualization
+                                                    historicalPricesData = priceData.historical.slice(0, 90).reverse(); // Reverse to show oldest first
+                                                    const dates = historicalPricesData.map(item => item.date);
+                                                    const prices = historicalPricesData.map(item => item.close);
+                                                    
+                                                    $('#stockChartSection').removeClass('hidden');
+                                                    renderStockChart(prices, dates, 'USD'); // Render initial chart in USD
+                                                } else {
+                                                    showErrorMessage(`No historical price data found for ${ticker}.`);
+                                                    $('#stockChartSection').addClass('hidden');
+                                                }
+                                            },
+                                            error: function(jqXHR, textStatus, errorThrown) {
+                                                hideLoadingSpinner();
+                                                console.error("Error fetching historical price data:", textStatus, errorThrown, jqXHR.responseText);
+                                                showErrorMessage(`Failed to fetch historical price data for ${ticker}.`);
+                                                $('#stockChartSection').addClass('hidden');
+                                            }
+                                        });
 
                                     } else {
+                                        hideLoadingSpinner();
                                         showErrorMessage(`No balance sheet data found for ${ticker}.`);
-                                        $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button if no data
-                                        $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                                        $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7');
+                                        $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7');
+                                        $('#stockChartSection').addClass('hidden');
                                     }
                                 },
                                 error: function(jqXHR, textStatus, errorThrown) {
                                     hideLoadingSpinner();
                                     console.error("Error fetching balance sheet data:", textStatus, errorThrown, jqXHR.responseText);
                                     showErrorMessage(`Failed to fetch balance sheet data for ${ticker}. Please check the ticker or your API key.`);
-                                    $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button on error
-                                    $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                                    $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7');
+                                    $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7');
+                                    $('#stockChartSection').addClass('hidden');
                                 }
                             });
 
                         } else {
                             hideLoadingSpinner();
                             showErrorMessage(`No company profile found for ${ticker}. Please check the ticker symbol.`);
-                            $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button on error
-                            $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                            $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7');
+                            $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7');
+                            $('#stockChartSection').addClass('hidden');
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         hideLoadingSpinner();
                         console.error("Error fetching company profile:", textStatus, errorThrown, jqXHR.responseText);
                         showErrorMessage(`Failed to fetch company profile for ${ticker}. Please check the ticker or your API key.`);
-                        $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7'); // Disable summary button on error
-                        $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7'); // Disable insights button
+                        $('#getSummaryBtn').prop('disabled', true).css('opacity', '0.7');
+                        $('#getInsightsBtn').prop('disabled', true).css('opacity', '0.7');
+                        $('#stockChartSection').addClass('hidden');
                     }
                 });
             });
@@ -525,18 +764,17 @@
                 }
 
                 showSummaryLoadingSpinner();
-                $('#financialSummary').removeClass('hidden'); // Show the summary box
-                $('#listenSummaryBtn').addClass('hidden'); // Hide main listen button while generating
-                $('#listenSummaryResultBtn').addClass('hidden'); // Hide new listen button while generating
-                if (window.speechSynthesis.speaking) { // Stop any ongoing speech
+                $('#financialSummary').removeClass('hidden');
+                $('#listenSummaryBtn').addClass('hidden');
+                $('#listenSummaryResultBtn').addClass('hidden');
+                if (window.speechSynthesis.speaking) {
                     window.speechSynthesis.cancel();
                 }
 
-                let newsSummary = "No recent news found for this company."; // Default message
+                let newsSummary = "No recent news found for this company.";
                 const newsUrl = `https://financialmodelingprep.com/api/v3/stock_news?tickers=${ratioData.ticker}&limit=5&apikey=${FMP_API_KEY}`;
 
                 try {
-                    console.log(`Fetching news from: ${newsUrl}`);
                     const newsResponse = await fetch(newsUrl);
                     
                     if (!newsResponse.ok) {
@@ -544,10 +782,8 @@
                     }
                     
                     const newsData = await newsResponse.json();
-                    console.log("News Data received:", newsData); // Log the received news data
 
                     if (newsData && newsData.length > 0) {
-                        // Include publishedDate for each news item
                         newsSummary = newsData.map(item => {
                             const date = item.publishedDate ? new Date(item.publishedDate).toLocaleDateString() : 'No Date';
                             return `- ${item.title} (${date})`;
@@ -560,7 +796,6 @@
                     newsSummary = "Could not fetch recent news due to an error.";
                 }
 
-                // Prompt for concise summary (max 80 words) including metric meanings, simplified for novice
                 const prompt = `Provide a very brief (max 80 words) financial summary for ${ratioData.companyName}. Explain what each ratio means in simple terms for someone who doesn't invest much.
 - Current Ratio (${ratioData.currentRatio}, ${ratioData.currentRatioStatus}): This ratio shows if a company has enough short-term assets (like cash) to cover its short-term debts (like bills due soon). A higher ratio usually means better short-term financial health.
 - Quick Ratio (${ratioData.quickRatio}, ${ratioData.quickRatioStatus}): Similar to Current Ratio, but it only counts assets that can be quickly turned into cash, excluding inventory. It's about immediate cash readiness, indicating how fast a company can pay off immediate debts without selling its stock.
@@ -568,8 +803,8 @@
 - Goodwill to Total Assets Ratio (${ratioData.goodwillToTotalAssetsRatio}, ${ratioData.goodwillToTotalAssetsRatioStatus}): This shows how much of a company's total value comes from "goodwill" (like brand name or reputation) rather than physical things. A high percentage might mean the company relies heavily on past acquisitions or intangible assets.
 - Recent News: ${newsSummary}`;
 
-                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] }; // Only send this specific prompt
-                const apiKey = ""; // API key is provided by Canvas runtime for gemini-2.0-flash
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 try {
@@ -585,8 +820,8 @@
                         result.candidates[0].content.parts.length > 0) {
                         const text = result.candidates[0].content.parts[0].text;
                         $('#summaryText').text(text);
-                        $('#listenSummaryBtn').removeClass('hidden'); // Show main listen button
-                        $('#listenSummaryResultBtn').removeClass('hidden'); // Show new listen button
+                        $('#listenSummaryBtn').removeClass('hidden');
+                        $('#listenSummaryResultBtn').removeClass('hidden');
                     } else {
                         $('#summaryText').text('Could not generate summary. Please try again.');
                         console.error('Unexpected LLM response structure:', result);
@@ -611,7 +846,7 @@
                     if (window.speechSynthesis.speaking) {
                         window.speechSynthesis.cancel();
                         $(this).text('🔊 Listen to Summary');
-                        $('#listenSummaryResultBtn').text('🔊 Listen'); // Also reset the in-box button
+                        $('#listenSummaryResultBtn').text('🔊 Listen');
                     } else {
                         currentUtterance = new SpeechSynthesisUtterance(summaryText);
                         currentUtterance.onend = function() {
@@ -626,7 +861,7 @@
                         };
                         window.speechSynthesis.speak(currentUtterance);
                         $(this).text('🔇 Stop Listening');
-                        $('#listenSummaryResultBtn').text('🔇 Stop Listening'); // Also update the in-box button
+                        $('#listenSummaryResultBtn').text('🔇 Stop Listening');
                     }
                 } else {
                     showErrorMessage('Text-to-speech is not supported in your browser.');
@@ -645,7 +880,7 @@
                     if (window.speechSynthesis.speaking) {
                         window.speechSynthesis.cancel();
                         $(this).text('🔊 Listen');
-                        $('#listenSummaryBtn').text('🔊 Listen to Summary'); // Also reset the main button
+                        $('#listenSummaryBtn').text('🔊 Listen to Summary');
                     } else {
                         currentUtterance = new SpeechSynthesisUtterance(summaryText);
                         currentUtterance.onend = function() {
@@ -660,63 +895,12 @@
                         };
                         window.speechSynthesis.speak(currentUtterance);
                         $(this).text('🔇 Stop Listening');
-                        $('#listenSummaryBtn').text('🔇 Stop Listening'); // Also update the main button
+                        $('#listenSummaryBtn').text('🔇 Stop Listening');
                     }
                 } else {
                     showErrorMessage('Text-to-speech is not supported in your browser.');
                 }
             });
-
-
-            // Removed Event listener for "Explain Ratio" buttons
-            /*
-            $(document).on('click', '.explain-ratio-btn', async function() {
-                const ratioName = $(this).data('ratio');
-                const ratioValue = $(this).siblings('span.font-semibold').text();
-                const ratioStatus = $(this).siblings('span.font-bold').text();
-                const companyName = $('#companyName').text();
-                const explanationBoxId = `${ratioName.toLowerCase().replace(/[^a-z0-9]/g, '')}Explanation`;
-                const explanationBox = $(`#${explanationBoxId}`);
-
-                // Hide all other explanations
-                $('.llm-explanation-box').not(explanationBox).addClass('hidden').text('');
-
-                // Toggle visibility of the current explanation box
-                if (explanationBox.hasClass('hidden')) {
-                    explanationBox.removeClass('hidden').text('Generating explanation...');
-
-                    const prompt = `Explain the "${ratioName}" in one very concise sentence (max 80 words) for a novice. What does its value (${ratioValue}) and status (${ratioStatus}) mean for ${companyName}? Focus on simple terms.`;
-                    
-                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-                    const apiKey = ""; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        const result = await response.json();
-
-                        if (result.candidates && result.candidates.length > 0 &&
-                            result.candidates[0].content && result.candidates[0].content.parts &&
-                            result.candidates[0].content.parts.length > 0) {
-                            const explanationText = result.candidates[0].content.parts[0].text;
-                            explanationBox.text(explanationText);
-                        } else {
-                            explanationBox.text('Could not get an explanation.');
-                            console.error('Unexpected LLM response structure for explain ratio:', result);
-                        }
-                    } catch (error) {
-                        explanationBox.text('Error fetching explanation.');
-                        console.error('Error calling Gemini API for explain ratio:', error);
-                    }
-                } else {
-                    explanationBox.addClass('hidden').text(''); // Hide if already visible
-                }
-            });
-            */
 
             // Event listener for "Get Actionable Insights" button
             $('#getInsightsBtn').on('click', async function() {
@@ -727,9 +911,8 @@
                 }
 
                 showInsightsLoadingSpinner();
-                $('#actionableInsights').removeClass('hidden'); // Show the insights box
-                $('#listenInsightsResultBtn').addClass('hidden'); // Hide new listen button while generating
-
+                $('#actionableInsights').removeClass('hidden');
+                $('#listenInsightsResultBtn').addClass('hidden');
 
                 const insightsPrompt = `Provide 2-3 very brief (max 80 words), actionable insights for ${ratioData.companyName} based on these financial ratios, suitable for a novice. Use short, simple sentences or bullet points. Focus on practical steps or key takeaways, especially for 'Fragile' or 'Robust' areas.
 - Current Ratio: ${ratioData.currentRatio} (${ratioData.currentRatioStatus})
@@ -738,7 +921,7 @@
 - Goodwill to Total Assets Ratio: ${ratioData.goodwillToTotalAssetsRatio} (${ratioData.goodwillToTotalAssetsRatioStatus})`;
 
                 const payload = { contents: [{ role: "user", parts: [{ text: insightsPrompt }] }] };
-                const apiKey = ""; 
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 try {
@@ -753,11 +936,11 @@
                         result.candidates[0].content && result.candidates[0].content.parts &&
                         result.candidates[0].content.parts.length > 0) {
                         const insightsText = result.candidates[0].content.parts[0].text;
-                        $('#insightsText').html(insightsText.replace(/\n/g, '<br>')); // Display as HTML to preserve newlines
-                        $('#listenInsightsResultBtn').removeClass('hidden'); // Show new listen button
+                        $('#insightsText').html(insightsText.replace(/\n/g, '<br>'));
+                        $('#listenInsightsResultBtn').removeClass('hidden');
                     } else {
                         $('#insightsText').text('Could not generate actionable insights.');
-                        console.error('Unexpected LLM response structure for insights:', result);
+                        console.error('Unexpected LLM response structure:', result);
                     }
                 } catch (error) {
                     $('#insightsText').text('Error generating insights. Please check your network.');
@@ -794,6 +977,52 @@
                     }
                 } else {
                     showErrorMessage('Text-to-speech is not supported in your browser.');
+                }
+            });
+
+            // Currency toggle for stock chart
+            $('#usdToggleBtn').on('click', function() {
+                if (historicalPricesData.length > 0) {
+                    const dates = historicalPricesData.map(item => item.date);
+                    const prices = historicalPricesData.map(item => item.close);
+                    renderStockChart(prices, dates, 'USD');
+                    $(this).removeClass('btn-tertiary').addClass('btn-secondary');
+                    $('#cadToggleBtn').removeClass('btn-secondary').addClass('btn-tertiary');
+                }
+            });
+
+            $('#cadToggleBtn').on('click', function() {
+                if (historicalPricesData.length > 0) {
+                    const dates = historicalPricesData.map(item => item.date);
+                    const prices = historicalPricesData.map(item => item.close);
+                    renderStockChart(prices, dates, 'CAD');
+                    $(this).removeClass('btn-tertiary').addClass('btn-secondary');
+                    $('#usdToggleBtn').removeClass('btn-secondary').addClass('btn-tertiary');
+                }
+            });
+
+
+            // Modal logic for individual ratio guides
+            function setupRatioModal(infoIconId, modalId) {
+                $(infoIconId).on('click', function() {
+                    $(modalId).removeClass('hidden');
+                });
+            }
+
+            // Setup for each ratio
+            setupRatioModal('#quickRatioInfo', '#quickRatioModal');
+            setupRatioModal('#currentRatioInfo', '#currentRatioModal');
+            setupRatioModal('#debtToEquityRatioInfo', '#debtToEquityRatioModal');
+            setupRatioModal('#goodwillToTotalAssetsRatioInfo', '#goodwillToTotalAssetsRatioModal');
+
+            // Close modal logic for all modals
+            $('.close-modal-btn').on('click', function() {
+                $(this).closest('.modal-overlay').addClass('hidden');
+            });
+
+            $(document).on('click', function(event) {
+                if ($(event.target).hasClass('modal-overlay')) {
+                    $(event.target).addClass('hidden');
                 }
             });
         });
