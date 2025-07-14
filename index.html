@@ -4,15 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Balance Sheet Ratios Analyzer</title>
-    <!-- Favicon -->
     <link rel="icon" href="logo-icon.png" type="image/png">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- jQuery CDN -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-    <!-- Inter font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -22,23 +17,64 @@
             --color-navy-blue: #021D49;
         }
 
+        /* Dark Mode Colors - redefined within body.dark-mode */
+        body.dark-mode {
+            --color-soft-black: #E0E0E0; /* Lighter text for dark mode */
+            --color-light-gray: #1a1a1a; /* Dark background */
+            --color-navy-blue: #00CE7C; /* Bold green for accents in dark mode */
+            --color-bold-green: #021D49; /* Navy blue for accents in dark mode */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--color-light-gray);
+            display: flex; /* Make body a flex container */
+            flex-direction: column; /* Stack children vertically */
+            min-height: 100vh; /* Ensure body takes at least full viewport height */
+            align-items: center; /* Center content horizontally */
+            padding: 1rem; /* Add some padding around the content */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+            transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out; /* Smooth transition */
+            color: var(--color-soft-black); /* Default text color */
+            position: relative; /* For positioning dark mode toggle */
         }
+        body.dark-mode {
+            background-color: var(--color-light-gray); /* Uses new dark background */
+            color: var(--color-soft-black); /* Uses new light text */
+        }
+
         .card {
             background-color: #ffffff;
             border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             padding: 2.5rem;
+            margin-bottom: 2rem; /* Add margin below the card to separate from ad */
+            width: 100%; /* Ensure it takes full width up to max-width */
+            max-width: 42rem; /* Limit width to 672px */
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
+        body.dark-mode .card {
+            background-color: #2c2c2c; /* Darker card background */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
         .input-field {
             border-radius: 0.5rem;
             border: 1px solid #d1d5db;
             padding: 0.75rem 1rem;
             width: 100%;
             box-sizing: border-box;
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
         }
+        body.dark-mode .input-field {
+            background-color: #3a3a3a;
+            border-color: #555;
+            color: var(--color-soft-black);
+        }
+        body.dark-mode .input-field::placeholder {
+            color: #bbb;
+        }
+
         .btn-primary {
             background-color: var(--color-navy-blue);
             color: #ffffff;
@@ -50,6 +86,13 @@
         .btn-primary:hover {
             background-color: rgba(2, 29, 73, 0.8);
         }
+        body.dark-mode .btn-primary {
+            background-color: var(--color-bold-green); /* Swap primary button color */
+        }
+        body.dark-mode .btn-primary:hover {
+            background-color: rgba(0, 206, 124, 0.8);
+        }
+
         .btn-secondary {
             background-color: var(--color-bold-green);
             color: #ffffff;
@@ -61,6 +104,13 @@
         .btn-secondary:hover {
             background-color: rgba(0, 206, 124, 0.8);
         }
+        body.dark-mode .btn-secondary {
+            background-color: var(--color-navy-blue); /* Swap secondary button color */
+        }
+        body.dark-mode .btn-secondary:hover {
+            background-color: rgba(2, 29, 73, 0.8);
+        }
+
         .btn-tertiary {
             background-color: #f0f0f0;
             color: var(--color-soft-black);
@@ -68,14 +118,21 @@
             border-radius: 0.3rem;
             font-size: 0.75rem;
             font-weight: 500;
-            transition: background-color 0.2s ease-in-out;
+            transition: background-color 0.2s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
             margin-left: 0.5rem;
             border: 1px solid #d1d5db;
         }
         .btn-tertiary:hover {
             background-color: #e0e0e0;
         }
-
+        body.dark-mode .btn-tertiary {
+            background-color: #555;
+            color: var(--color-soft-black);
+            border-color: #666;
+        }
+        body.dark-mode .btn-tertiary:hover {
+            background-color: #666;
+        }
 
         .ratio-item {
             display: flex;
@@ -83,10 +140,15 @@
             align-items: center;
             padding: 0.75rem 0;
             border-bottom: 1px solid #e5e7eb;
+            transition: border-bottom-color 0.3s ease-in-out;
         }
         .ratio-item:last-child {
             border-bottom: none;
         }
+        body.dark-mode .ratio-item {
+            border-bottom-color: #444;
+        }
+
         .loading-spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: var(--color-navy-blue);
@@ -98,6 +160,9 @@
             vertical-align: middle;
             margin-left: 0.5rem;
         }
+        body.dark-mode .loading-spinner {
+            border-left-color: var(--color-bold-green); /* Adjust for dark mode primary accent */
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -106,14 +171,25 @@
         .status-fragile { color: #dc2626; }
         .status-robust { color: #d97706; }
         .status-antifragile { color: #16a34a; }
+        body.dark-mode .status-fragile { color: #ef4444; } /* Slightly brighter red for dark mode */
+        body.dark-mode .status-robust { color: #f97316; } /* Slightly brighter orange for dark mode */
+        body.dark-mode .status-antifragile { color: #4ade80; } /* Slightly brighter green for dark mode */
 
-        .llm-summary-box {
+
+        .llm-summary-box, .llm-insights-box {
             background-color: var(--color-light-gray);
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 1.5rem;
             margin-top: 1.5rem;
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
         }
+        body.dark-mode .llm-summary-box,
+        body.dark-mode .llm-insights-box {
+            background-color: #2c2c2c;
+            border-color: #555;
+        }
+
         .llm-explanation-box {
             background-color: #e0f2f7;
             border-left: 4px solid #00CE7C;
@@ -123,13 +199,11 @@
             font-size: 0.875rem;
             color: var(--color-soft-black);
             animation: fadeIn 0.3s ease-out;
+            transition: background-color 0.3s ease-in-out, border-left-color 0.3s ease-in-out, color 0.3s ease-in-out;
         }
-        .llm-insights-box {
-            background-color: #e0f7e0;
-            border-left: 4px solid var(--color-navy-blue);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
+        body.dark-mode .llm-explanation-box {
+            background-color: #2a3e4e; /* Darker teal for explanations */
+            border-left-color: var(--color-bold-green); /* Maintain accent color */
             color: var(--color-soft-black);
         }
         @keyframes fadeIn {
@@ -163,7 +237,13 @@
             max-height: 90%;
             overflow-y: auto;
             position: relative;
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
+        body.dark-mode .modal-content {
+            background-color: #2c2c2c;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
         .modal-close-btn {
             position: absolute;
             top: 1rem;
@@ -173,7 +253,12 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--color-soft-black);
+            transition: color 0.3s ease-in-out;
         }
+        body.dark-mode .modal-close-btn {
+            color: var(--color-soft-black);
+        }
+
         .info-icon {
             cursor: pointer;
             margin-left: 0.5rem;
@@ -184,14 +269,30 @@
         .info-icon:hover {
             color: var(--color-bold-green);
         }
+        body.dark-mode .info-icon {
+            color: var(--color-bold-green); /* Change info icon color for dark mode */
+        }
+        body.dark-mode .info-icon:hover {
+            color: var(--color-navy-blue); /* Change hover color for dark mode */
+        }
 
         .modal-guide-text {
             font-size: 0.9rem;
             margin-bottom: 0.5rem;
+            transition: color 0.3s ease-in-out;
         }
         .modal-guide-text strong {
             color: var(--color-navy-blue);
+            transition: color 0.3s ease-in-out;
         }
+        body.dark-mode .modal-guide-text strong {
+            color: var(--color-bold-green); /* Matches new green accent */
+        }
+        body.dark-mode #companyName {
+            color: var(--color-bold-green); /* Matches new green accent */
+        }
+
+
         .modal-guide-list {
             list-style: disc;
             padding-left: 1.5rem;
@@ -206,25 +307,71 @@
             margin-right: auto;
             height: 300px; /* Base height for chart */
             max-height: 400px; /* Max height to prevent excessive vertical space */
+            background-color: #ffffff; /* Default background */
+            transition: background-color 0.3s ease-in-out;
+        }
+        body.dark-mode .chart-container {
+            background-color: #2c2c2c;
         }
         @media (min-width: 768px) {
             .chart-container {
                 height: 350px;
             }
         }
+        /* Ad banner specific styles */
+        #ad-banner-container {
+            max-width: 42rem; /* Match the max-width of the card for alignment */
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: auto; /* Push to the bottom when using flex-direction: column on body */
+            margin-bottom: 1rem; /* Add some space from the bottom of the page */
+            background-color: #ffffff; /* Default background */
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        body.dark-mode #ad-banner-container {
+            background-color: #2c2c2c;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Dark mode toggle button specific styles */
+        #darkModeToggle {
+            background-color: #E5E7EB; /* light gray */
+            color: #4B5563; /* dark gray text */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem; /* Make it a square */
+            height: 2.5rem; /* Make it a square */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #darkModeToggle:hover {
+            background-color: #D1D5DB;
+        }
+
+        body.dark-mode #darkModeToggle {
+            background-color: #4B5563; /* dark gray */
+            color: #F3F4F6; /* light text */
+        }
+
+        body.dark-mode #darkModeToggle:hover {
+            background-color: #6B7280;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <!-- Chosen Palette: Warm Neutrals with Bold Green and Navy Blue Accents -->
-    <!-- Application Structure Plan: The application is structured as a single-page interactive financial analyzer. It begins with a clear input section for a company ticker. Upon analysis, a results section dynamically appears, presenting core balance sheet ratios in a list format for quick review. This is followed by dedicated sections for an AI-generated financial summary and actionable insights, each with text-to-speech capabilities. The interactive stock price chart with currency toggle enhances exploration and understanding of individual stock performance. This linear, progressive structure (Input -> Core Data -> Interpretation -> Actionable Takeaways -> Detailed Stock Performance) was chosen to guide novice users through financial analysis in an intuitive, digestible, and non-overwhelming manner, prioritizing understanding and ease of consumption over complex navigation. -->
-    <!-- Visualization & Content Choices: The core information from the source report (balance sheet ratios, financial summary, actionable insights) is presented primarily as clear textual content.
-    - Ratio Values & Status: Goal: Inform. Method: HTML span elements with color-coded Tailwind classes for status (Fragile, Robust, Antifragile). Interaction: Info icon toggles a modal with specific guide information for each ratio. Justification: For single-point-in-time numerical ratios, direct text display with status is the clearest and most immediate way to convey information to a novice user without introducing unnecessary complexity of charts. Individual modals provide on-demand, contextual explanations.
-    - Financial Summary (AI-generated): Goal: Synthesize & Inform. Method: HTML paragraph within a styled div. Interaction: "Listen" button for text-to-speech. Justification: Provides a high-level, simplified overview, crucial for novice understanding. TTS enhances accessibility and engagement.
-    - Actionable Insights (AI-generated): Goal: Action & Inform. Method: HTML paragraph (with <br> for line breaks) within a styled div. Interaction: "Listen" button for text-to-speech. Justification: Translates complex financial data into practical takeaways, directly addressing the novice user's need for guidance. TTS enhances accessibility.
-    - Stock Price Chart: Goal: Change & Inform. Method: Chart.js line chart within a responsive div container. Interaction: Toggle buttons for USD/CAD currency view. Justification: Visualizes historical price trends, which is critical for understanding stock performance. Currency toggle adds flexibility for users in different regions. Chart.js provides robust, interactive charting capabilities.
-    - Company Branding: Goal: Identity. Method: PNG image (user-provided) for favicon and main title. Justification: Standard web practice for branding.
-    - Loading Spinners & Error Messages: Goal: User Feedback. Method: HTML span with CSS animation and text paragraphs, dynamically shown/hidden with JS. Justification: Provides crucial feedback during API calls and for invalid inputs, improving user experience.
-    Confirmed: NO SVG graphics used. NO Mermaid JS used. -->
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+    <div id="darkModeToggleContainer" class="absolute top-4 right-4 z-10">
+        <button id="darkModeToggle" class="p-2 rounded-full">
+            🌙
+        </button>
+    </div>
 
     <div class="card w-full max-w-2xl">
         <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center" style="color: var(--color-soft-black);">
@@ -329,14 +476,16 @@
                 </div>
             </div>
 
-            <p class="text-sm mt-4 text-center text-gray-600" style="color: var(--color-soft-black);">
-                **Disclaimer:** This tool is for educational purposes only and should not be considered professional financial advice. Always consult with a qualified financial advisor before making any investment decisions.
-            </p>
+            <div class="flex justify-center mt-4">
+                <button id="disclaimerBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200">
+                    Disclaimer
+                </button>
+            </div>
+
             <p class="text-sm mt-2 text-center" style="color: var(--color-soft-black);">&copy; RhytoLeaf Inc. 2025</p>
         </div>
     </div>
 
-    <!-- Quick Ratio Guide Modal -->
     <div id="quickRatioModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close-btn close-modal-btn">✖</button>
@@ -354,7 +503,6 @@
         </div>
     </div>
 
-    <!-- Current Ratio Guide Modal -->
     <div id="currentRatioModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close-btn close-modal-btn">✖</button>
@@ -372,7 +520,6 @@
         </div>
     </div>
 
-    <!-- Debt-to-Equity Ratio Guide Modal -->
     <div id="debtToEquityRatioModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close-btn close-modal-btn">✖</button>
@@ -390,7 +537,6 @@
         </div>
     </div>
 
-    <!-- Goodwill to Total Assets Ratio Guide Modal -->
     <div id="goodwillToTotalAssetsRatioModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close-btn close-modal-btn">✖</button>
@@ -406,6 +552,23 @@
                 </ul>
             </div>
         </div>
+    </div>
+
+    <div id="disclaimerModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn close-modal-btn">✖</button>
+            <h3 class="text-xl font-semibold mb-3 text-red-700">Important Disclaimer</h3>
+            <p class="modal-guide-text">
+                This tool is for educational purposes only and should not be considered professional financial advice. Always consult with a qualified financial advisor before making any investment decisions.
+            </p>
+        </div>
+    </div>
+
+    <div id="ad-banner-container" class="mt-8 py-4 text-center bg-white rounded-lg shadow-md w-full max-w-2xl">
+        <p class="text-gray-500">Advertisement</p>
+        <div style="width: 100%; max-width: 100%; height: 90px; background-color: #f0f0f0; margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc;">
+            <p class="text-gray-600">Your AdSense Banner Ad (728x90)</p>
+            </div>
     </div>
 
     <script>
@@ -534,6 +697,12 @@
                 const displayPrices = prices.map(price => currency === 'CAD' ? (price * CAD_USD_EXCHANGE_RATE) : price);
                 const currencySymbol = currency === 'CAD' ? 'C$' : '$';
 
+                // Get computed styles for chart colors based on current theme
+                const bodyStyles = getComputedStyle(document.body);
+                const chartBorderColor = bodyStyles.getPropertyValue('--color-navy-blue').trim();
+                const chartBackgroundColor = Chart.helpers.color(chartBorderColor).alpha(0.1).rgbString();
+                const textColor = bodyStyles.getPropertyValue('--color-soft-black').trim();
+
                 stockChart = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -541,8 +710,8 @@
                         datasets: [{
                             label: `Closing Price (${currency})`,
                             data: displayPrices,
-                            borderColor: 'var(--color-navy-blue)',
-                            backgroundColor: 'rgba(2, 29, 73, 0.1)',
+                            borderColor: chartBorderColor,
+                            backgroundColor: chartBackgroundColor,
                             fill: true,
                             tension: 0.1
                         }]
@@ -572,18 +741,26 @@
                                     autoSkip: true,
                                     maxRotation: 45,
                                     minRotation: 0,
+                                    color: textColor, /* Set x-axis tick color */
                                     callback: function(val, index) {
                                         // Show roughly every 10th label, adjust as needed for density
                                         return index % Math.ceil(dates.length / 10) === 0 ? this.getLabelForValue(val) : '';
                                     }
+                                },
+                                grid: {
+                                    color: 'rgba(128,128,128,0.2)', /* Set grid line color */
                                 }
                             },
                             y: {
                                 beginAtZero: false,
                                 ticks: {
+                                    color: textColor, /* Set y-axis tick color */
                                     callback: function(value) {
                                         return `${currencySymbol}${value.toFixed(2)}`;
                                     }
+                                },
+                                grid: {
+                                    color: 'rgba(128,128,128,0.2)', /* Set grid line color */
                                 }
                             }
                         }
@@ -1023,6 +1200,61 @@
             $(document).on('click', function(event) {
                 if ($(event.target).hasClass('modal-overlay')) {
                     $(event.target).addClass('hidden');
+                }
+            });
+
+            // New: Disclaimer Button and Modal
+            $('#disclaimerBtn').on('click', function() {
+                $('#disclaimerModal').removeClass('hidden');
+            });
+
+            // Dark Mode Toggle
+            const darkModeToggle = $('#darkModeToggle');
+            const body = $('body');
+            const currentTheme = localStorage.getItem('theme');
+
+            // Apply saved theme on load
+            if (currentTheme) {
+                body.addClass(currentTheme);
+                if (currentTheme === 'dark-mode') {
+                    darkModeToggle.text('☀️'); // Change icon to sun if dark mode is on
+                } else {
+                    darkModeToggle.text('🌙'); // Change icon to moon if light mode is on
+                }
+            } else {
+                // Default to light mode if no theme is saved or if user prefers light mode
+                // Check if user has a system preference for dark mode
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    body.addClass('dark-mode');
+                    localStorage.setItem('theme', 'dark-mode');
+                    darkModeToggle.text('☀️');
+                } else {
+                    body.removeClass('dark-mode');
+                    localStorage.setItem('theme', 'light-mode'); // Explicitly set light mode
+                    darkModeToggle.text('🌙');
+                }
+            }
+
+            darkModeToggle.on('click', function() {
+                body.toggleClass('dark-mode');
+                if (body.hasClass('dark-mode')) {
+                    localStorage.setItem('theme', 'dark-mode');
+                    $(this).text('☀️'); // Change icon to sun
+                    if (stockChart) {
+                        // Re-render chart to apply new theme colors dynamically
+                        const dates = historicalPricesData.map(item => item.date);
+                        const prices = historicalPricesData.map(item => item.close);
+                        renderStockChart(prices, dates, $('#usdToggleBtn').hasClass('btn-secondary') ? 'USD' : 'CAD');
+                    }
+                } else {
+                    localStorage.setItem('theme', 'light-mode');
+                    $(this).text('🌙'); // Change icon to moon
+                    if (stockChart) {
+                        // Re-render chart to apply new theme colors dynamically
+                        const dates = historicalPricesData.map(item => item.date);
+                        const prices = historicalPricesData.map(item => item.close);
+                        renderStockChart(prices, dates, $('#usdToggleBtn').hasClass('btn-secondary') ? 'USD' : 'CAD');
+                    }
                 }
             });
         });
